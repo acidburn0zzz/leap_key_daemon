@@ -1,0 +1,59 @@
+#!/usr/bin/ruby
+
+#
+# Leap Key Daemon
+#
+
+BASE_DIR = File.expand_path('../..', File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__)
+
+begin
+  #
+  # try without rubygems (might be already loaded or not present)
+  #
+  require 'leap_key_daemon/version'
+rescue LoadError
+  #
+  # try with rubygems
+  #
+  require "#{BASE_DIR}/lib/leap_key_daemon/version.rb"
+  LeapKeyDaemon::REQUIRE_PATHS.each do |path|
+    path = File.expand_path(path, BASE_DIR)
+    $LOAD_PATH.unshift path unless $LOAD_PATH.include?(path)
+  end
+  require 'rubygems'
+  require 'leap_key_daemon/version'
+end
+
+# Graceful Ctrl-C
+Signal.trap("SIGINT") do
+  LeapKeyDaemon.logger.warn "Received SIGINT - stopping leap_key_daemon"
+  puts "\nQuit - leaving leap_key_daemon"
+  exit
+end
+
+# this changes later, so save the initial current directory
+CWD = Dir.pwd
+
+# handle --version ourselves
+if ARGV.grep(/--version/).any?
+  puts "leap_key_daemon #{LeapKeyDaemon::VERSION}, ruby #{RUBY_VERSION}"
+  exit(0)
+end
+
+# --run-once will process all keys not processed yet and then exit
+if ARGV.grep(/--once/).any? or ARGV.grep(/--run-once/).any?
+  require 'leap_key_daemon'
+  # TODO: implement me.
+  exit(0)
+end
+
+#
+# Start the daemon
+#
+require 'daemons'
+if ENV["USER"] == "root"
+  options = {:app_name => 'leap_key_daemon', :dir_mode => :system}  # this will put the pid file in /var/run
+else
+  options = {:app_name => 'leap_key_daemon', :dir_mode => :normal, :dir => '/tmp'} # this will put the pid file in /tmp
+end
+Daemons.run("#{BASE_DIR}/lib/leap_key_daemon.rb", options)
