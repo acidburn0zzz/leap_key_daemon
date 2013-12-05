@@ -9,8 +9,8 @@ module CouchRest
     def initialize(config)
       @logger = config.logger
       @logger.info "Observing #{config.couch_host_without_password}"
-      @logger.info "Tracking #{config.identities_db_name}"
-      @db = CouchRest.new(config.couch_host).database(config.identities_db_name)
+      @logger.info "Tracking #{config.db_name}"
+      @db = CouchRest.new(config.couch_host).database(config.db_name)
       @seq_filename = config.seq_file
       read_seq(@seq_filename)
     end

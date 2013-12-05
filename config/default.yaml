@@ -3,7 +3,7 @@
 #
 
 # database to observe for changes:
-identities_db_name: "identities"
+db_name: "identities"
 
 # couch connection configuration
 couch_connection:

@@ -3,7 +3,7 @@ require 'yaml'
 module LeapKeyDaemon
   class Config
 
-    attr_accessor :identities_db_name
+    attr_accessor :db_name
     attr_accessor :couch_connection
     attr_accessor :seq_file
     attr_accessor :log_file
