@@ -10,6 +10,7 @@ module CouchRest
       attr_accessor :log_file
       attr_writer :log_level
       attr_accessor :logger
+      attr_accessor :options
 
       def load(base_dir, *configs)
         @base_dir = base_dir
