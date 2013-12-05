@@ -6,10 +6,12 @@ module CouchRest
 
     attr_accessor :db
 
-    def initialize(db, config)
-      @db = db
-      @seq_filename = config[:seq_filename]
-      @logger = config[:logger]
+    def initialize(config)
+      @logger = config.logger
+      @logger.info "Observing #{config.couch_host_without_password}"
+      @logger.info "Tracking #{config.identities_db_name}"
+      @db = CouchRest.new(config.couch_host).database(config.identities_db_name)
+      @seq_filename = config.seq_file
       read_seq(@seq_filename)
     end
 
@@ -87,7 +89,7 @@ module CouchRest
     end
 
     def store_seq(seq)
-      File.write(@seq_filename, seq.to_json)
+      File.write @seq_filename, MultiJson.dump(seq)
     end
 
     #

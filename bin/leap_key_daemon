@@ -26,7 +26,6 @@ end
 
 # Graceful Ctrl-C
 Signal.trap("SIGINT") do
-  LeapKeyDaemon.logger.warn "Received SIGINT - stopping leap_key_daemon"
   puts "\nQuit - leaving leap_key_daemon"
   exit
 end

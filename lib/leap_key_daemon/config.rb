@@ -1,18 +1,19 @@
 require 'yaml'
 
 module LeapKeyDaemon
-  module Config
-    extend self
+  class Config
 
     attr_accessor :identities_db_name
     attr_accessor :couch_connection
     attr_accessor :seq_file
     attr_accessor :log_file
     attr_accessor :log_level
+    attr_accessor :logger
 
-    def self.load(base_dir, *configs)
+    def initialize(base_dir, *configs)
+      @base_dir = base_dir
       loaded = configs.collect do |file_path|
-        file = find_file(base_dir, file_path)
+        file = find_file(file_path)
         load_config(file)
       end
       init_logger
@@ -35,12 +36,12 @@ module LeapKeyDaemon
     def init_logger
       if log_file
         require 'logger'
-        LeapKeyDaemon.logger = Logger.new(log_file)
+        @logger = Logger.new(log_file)
       else
         require 'syslog/logger'
-        LeapKeyDaemon.logger = Syslog::Logger.new('leap_key_daemon')
+        @logger = Syslog::Logger.new('leap_key_daemon')
       end
-      LeapKeyDaemon.logger.level = Logger.const_get(log_level.upcase)
+      @logger.level = Logger.const_get(log_level.upcase)
     end
 
     def load_config(file_path)
@@ -49,8 +50,8 @@ module LeapKeyDaemon
       return file_path
     rescue NoMethodError => exc
       init_logger
-      LeapKeyDaemon.logger.fatal "Error in file #{file_path}"
-      LeapKeyDaemon.logger.fatal exc
+      logger.fatal "Error in file #{file_path}"
+      logger.fatal exc
       exit(1)
     end
 
@@ -63,7 +64,7 @@ module LeapKeyDaemon
 
     def apply_setting(key, value)
       if value.is_a? Hash
-        value = symbolize_keys(value)
+        value = self.class.symbolize_keys(value)
       end
       self.send("#{key}=", value)
     rescue NoMethodError => exc
@@ -79,18 +80,18 @@ module LeapKeyDaemon
       newhsh
     end
 
-    def self.find_file(base_dir, file_path)
+    def find_file(file_path)
       return nil unless file_path
       if defined? CWD
         return File.expand_path(file_path, CWD)  if File.exists?(File.expand_path(file_path, CWD))
       end
-      return File.expand_path(file_path, base_dir) if File.exists?(File.expand_path(file_path, base_dir))
+      return File.expand_path(file_path, @base_dir) if File.exists?(File.expand_path(file_path, @base_dir))
       return nil
     end
 
     def log_loaded_configs(files)
       files.each do |file|
-        LeapKeyDaemon.logger.info "Loaded config from #{file} ."
+        logger.info "Loaded config from #{file} ."
       end
     end
   end
