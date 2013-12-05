@@ -1,6 +1,8 @@
 require 'couchrest'
 require 'fileutils'
 
+require 'couchrest/changes/config'
+
 module CouchRest
   class Changes
 

@@ -15,12 +15,11 @@ module LeapKeyDaemon
   # Load Config
   # this must come first, because CouchRest needs the connection defined before the models are defined.
   #
-  require 'leap_key_daemon/config'
+  require 'couchrest/changes'
   configs = ['config/default.yaml', LEAP_KEY_DAEMON_CONFIG, ARGV.grep(/\.ya?ml$/).first]
-  config = LeapKeyDaemon::Config.new(BASE_DIR, *configs)
+  config = CouchRest::Changes::Config.new(BASE_DIR, *configs)
   LeapKeyDaemon.logger = config.logger
 
-  require 'couch_rest/changes'
   identities = CouchRest::Changes.new(config)
 
   identities.changed do |hash|
