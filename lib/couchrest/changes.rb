@@ -6,14 +6,12 @@ require 'couchrest/changes/config'
 module CouchRest
   class Changes
 
-    attr_accessor :db
+    attr_writer :logger
 
-    def initialize(config)
-      @logger = config.logger
-      @logger.info "Observing #{config.couch_host_without_password}"
-      @logger.info "Tracking #{config.db_name}"
-      @db = CouchRest.new(config.couch_host).database(config.db_name)
-      @seq_filename = config.seq_file
+    def initialize(db_name)
+      logger.info "Tracking #{db_name}"
+      @db = CouchRest.new(Config.couch_host).database(db_name)
+      @seq_filename = Config.seq_file
       read_seq(@seq_filename)
     end
 
@@ -38,17 +36,25 @@ module CouchRest
     end
 
     def listen
-      @logger.info "listening..."
-      @logger.debug "Starting at sequence #{since}"
+      logger.info "listening..."
+      logger.debug "Starting at sequence #{since}"
       db.changes :feed => :continuous, :since => since, :heartbeat => 1000 do |hash|
         callbacks(hash)
         store_seq(hash["seq"])
       end
-      @logger.info "couch stream ended unexpectedly."
-      @logger.debug result.inspect
+      logger.info "couch stream ended unexpectedly."
+      logger.debug result.inspect
     end
 
     protected
+
+    def logger
+      logger ||= Config.logger
+    end
+
+    def db
+      @db
+    end
 
     def since
       @since ||= 0  # fetch_last_seq
@@ -74,7 +80,7 @@ module CouchRest
     end
 
     def read_seq(seq_filename)
-      @logger.debug "Looking up sequence here: #{seq_filename}"
+      logger.debug "Looking up sequence here: #{seq_filename}"
       FileUtils.touch(seq_filename)
       unless File.writable?(seq_filename)
         raise StandardError.new("Can't access sequence file")
@@ -82,12 +88,12 @@ module CouchRest
       @since = File.read(seq_filename)
       if @since == ''
         @since = nil
-        @logger.debug "Found no sequence in the file."
+        logger.debug "Found no sequence in the file."
       else
-        @logger.debug "Found sequence: #{@since}"
+        logger.debug "Found sequence: #{@since}"
       end
     rescue Errno::ENOENT => e
-      @logger.warn "No sequence file found. Starting from scratch"
+      logger.warn "No sequence file found. Starting from scratch"
     end
 
     def store_seq(seq)
@@ -100,7 +106,7 @@ module CouchRest
     #
     def fetch_last_seq
       hash = db.changes :limit => 1, :descending => true
-      @logger.info "starting at seq: " + hash["last_seq"]
+      logger.info "starting at seq: " + hash["last_seq"]
       return hash["last_seq"]
     end
 

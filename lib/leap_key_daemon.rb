@@ -17,14 +17,14 @@ module LeapKeyDaemon
   #
   require 'couchrest/changes'
   configs = ['config/default.yaml', LEAP_KEY_DAEMON_CONFIG, ARGV.grep(/\.ya?ml$/).first]
-  config = CouchRest::Changes::Config.new(BASE_DIR, *configs)
-  LeapKeyDaemon.logger = config.logger
+  CouchRest::Changes::Config.load(BASE_DIR, *configs)
+  logger = LeapKeyDaemon.logger = CouchRest::Changes::Config.logger
 
-  identities = CouchRest::Changes.new(config)
+  identities = CouchRest::Changes.new('identities')
 
   identities.changed do |hash|
-    config.logger.debug "Updated identity " + hash['id']
-    config.logger.debug hash.inspect
+    logger.debug "Updated identity " + hash['id']
+    logger.debug hash.inspect
   end
 
   identities.listen

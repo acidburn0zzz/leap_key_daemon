@@ -2,16 +2,16 @@ require 'yaml'
 
 module CouchRest
   class Changes
-    class Config
+    module Config
+      extend self
 
-      attr_accessor :db_name
       attr_accessor :couch_connection
       attr_accessor :seq_file
       attr_accessor :log_file
-      attr_accessor :log_level
+      attr_writer :log_level
       attr_accessor :logger
 
-      def initialize(base_dir, *configs)
+      def load(base_dir, *configs)
         @base_dir = base_dir
         loaded = configs.collect do |file_path|
           file = find_file(file_path)
@@ -19,6 +19,7 @@ module CouchRest
         end
         init_logger
         log_loaded_configs(loaded.compact)
+        logger.info "Observing #{couch_host_without_password}"
       end
 
       def couch_host(conf = nil)
@@ -47,30 +48,33 @@ module CouchRest
 
       def load_config(file_path)
         return unless file_path
-        load_settings YAML.load(File.read(file_path))
+        load_settings YAML.load(File.read(file_path)), file_path
         return file_path
-      rescue NoMethodError => exc
-        init_logger
-        logger.fatal "Error in file #{file_path}"
-        logger.fatal exc
-        exit(1)
       end
 
-      def load_settings(hash)
+      def load_settings(hash, file_path)
         return unless hash
         hash.each do |key, value|
-          apply_setting(key, value)
+          begin
+            apply_setting(key, value)
+          rescue NoMethodError => exc
+            # log might not have been configured yet correctly
+            # so better also print this
+            STDERR.puts "Error in file #{file_path}"
+            STDERR.puts "'#{key}' is not a valid option"
+            init_logger
+            logger.warn "Error in file #{file_path}"
+            logger.warn "'#{key}' is not a valid option"
+            logger.debug exc
+          end
         end
       end
 
       def apply_setting(key, value)
         if value.is_a? Hash
-          value = self.class.symbolize_keys(value)
+          value = symbolize_keys(value)
         end
         self.send("#{key}=", value)
-      rescue NoMethodError => exc
-        STDERR.puts "'#{key}' is not a valid option"
-        raise exc
       end
 
       def self.symbolize_keys(hsh)
@@ -94,6 +98,10 @@ module CouchRest
         files.each do |file|
           logger.info "Loaded config from #{file} ."
         end
+      end
+
+      def log_level
+        @log_level || 'info'
       end
     end
   end
