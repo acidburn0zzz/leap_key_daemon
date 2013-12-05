@@ -27,6 +27,7 @@ end
 # Graceful Ctrl-C
 Signal.trap("SIGINT") do
   puts "\nQuit - leaving leap_key_daemon"
+  LeapKeyDaemon.logger.info "received SIGINT. exiting"
   exit
 end
 
