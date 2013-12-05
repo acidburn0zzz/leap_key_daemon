@@ -40,6 +40,8 @@ module CouchRest
         callbacks(hash)
         store_seq(hash["seq"])
       end
+      @logger.info "couch stream ended unexpectedly."
+      @logger.debug result.inspect
     end
 
     protected
@@ -49,6 +51,8 @@ module CouchRest
     end
 
     def callbacks(hash)
+      # let's not track design document changes
+      return if hash['id'].start_with? '_design/'
       return unless changes = hash["changes"]
       changed(hash)
       return deleted(hash) if hash["deleted"]
@@ -71,18 +75,24 @@ module CouchRest
       unless File.writable?(seq_filename)
         raise StandardError.new("Can't access sequence file")
       end
-      @since = File.read(seq_filename).to_i
-      @logger.debug "Found sequence: #{@since}"
+      @since = File.read(seq_filename)
+      if @since == ''
+        @since = nil
+        @logger.debug "Found no sequence in the file."
+      else
+        @logger.debug "Found sequence: #{@since}"
+      end
     rescue Errno::ENOENT => e
       @logger.warn "No sequence file found. Starting from scratch"
     end
 
     def store_seq(seq)
-      File.write(@seq_filename, seq)
+      File.write(@seq_filename, seq.to_json)
     end
 
     #
     # UNUSED: this is useful for only following new sequences.
+    # might also require .to_json to work on bigcouch.
     #
     def fetch_last_seq
       hash = db.changes :limit => 1, :descending => true
