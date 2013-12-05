@@ -2,16 +2,15 @@
 # Default configuration options for LeapKeyDaemon
 #
 
-# database to observe for changes:
-db_name: "identities"
-
 # couch connection configuration
-couch_connection:
+connection:
   protocol: "http"
   host: "localhost"
   port: 5984
   username: ~
   password: ~
+  prefix: ""
+  suffix: ""
 
 # file to store the last processed user record in so we can resume after
 # a restart:

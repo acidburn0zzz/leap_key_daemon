@@ -5,7 +5,7 @@ module CouchRest
     module Config
       extend self
 
-      attr_accessor :couch_connection
+      attr_accessor :connection
       attr_accessor :seq_file
       attr_accessor :log_file
       attr_writer :log_level
@@ -23,14 +23,21 @@ module CouchRest
       end
 
       def couch_host(conf = nil)
-        conf ||= couch_connection
+        conf ||= connection
         userinfo = [conf[:username], conf[:password]].compact.join(':')
         userinfo += '@' unless userinfo.empty?
         "#{conf[:protocol]}://#{userinfo}#{conf[:host]}:#{conf[:port]}"
       end
 
       def couch_host_without_password
-        couch_host couch_connection.merge({:password => nil})
+        couch_host connection.merge({:password => nil})
+      end
+
+      def complete_db_name(db_name)
+        [connection[:prefix], db_name, connection[:suffix]].
+         compact.
+         reject{|part| part == ""}.
+         join('_')
       end
 
       private

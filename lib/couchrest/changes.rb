@@ -9,6 +9,7 @@ module CouchRest
     attr_writer :logger
 
     def initialize(db_name)
+      db_name = Config.complete_db_name(db_name)
       logger.info "Tracking #{db_name}"
       @db = CouchRest.new(Config.couch_host).database(db_name)
       @seq_filename = Config.seq_file
@@ -38,7 +39,7 @@ module CouchRest
     def listen
       logger.info "listening..."
       logger.debug "Starting at sequence #{since}"
-      db.changes :feed => :continuous, :since => since, :heartbeat => 1000 do |hash|
+      result = db.changes :feed => :continuous, :since => since, :heartbeat => 1000 do |hash|
         callbacks(hash)
         store_seq(hash["seq"])
       end
