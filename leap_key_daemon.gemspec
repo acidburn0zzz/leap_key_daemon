@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.executables << 'leap_key_daemon'
 
   s.add_dependency "couchrest", "~> 1.1.3"
-  s.add_dependency "couchrest_changes", "~> 0.0.1"
+  s.add_dependency "couchrest_changes", "~> 0.0.2"
   s.add_dependency "daemons"
   s.add_dependency "yajl-ruby"
   s.add_dependency "syslog_logger", "~> 2.0.0"

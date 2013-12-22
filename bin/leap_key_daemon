@@ -40,11 +40,15 @@ if ARGV.grep(/--version/).any?
   exit(0)
 end
 
-# --run-once will process all keys not processed yet and then exit
-if ARGV.grep(/--once/).any? or ARGV.grep(/--run-once/).any?
-  require 'leap_key_daemon'
-  # TODO: implement me.
-  exit(0)
+# --run-once            create databases for new users and then exit
+# --rerun               also act upon users that have already been processed
+LeapKeyDaemon::FLAGS.concat ARGV.grep(/--.*/)
+
+# if flags have been set but an action is missing we assume
+# we should run in foreground.
+if ARGV.first.start_with?('--')
+  ARGV.unshift '--'
+  ARGV.unshift 'run'
 end
 
 #

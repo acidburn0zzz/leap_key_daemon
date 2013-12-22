@@ -9,6 +9,7 @@ module LeapKeyDaemon
 
   class << self
     attr_accessor :logger
+    attr_accessor :config
   end
 
   #
@@ -17,13 +18,17 @@ module LeapKeyDaemon
   #
   require 'couchrest/changes'
   configs = ['config/default.yaml', LEAP_KEY_DAEMON_CONFIG, ARGV.grep(/\.ya?ml$/).first]
-  CouchRest::Changes::Config.load(BASE_DIR, *configs)
-  logger = LeapKeyDaemon.logger = CouchRest::Changes::Config.logger
+  self.config = CouchRest::Changes::Config.load(BASE_DIR, *configs)
+  self.logger = CouchRest::Changes::Config.logger
+
+  # hand flags over to CouchRest::Changes
+  config.flags = FLAGS
+  puts "flags: #{FLAGS}" if FLAGS.any?
 
   identities = CouchRest::Changes.new('identities')
 
   identities.changed do |hash|
-    logger.debug "Updated identity " + hash['id']
+    logger.debug "Changed identity " + hash['id']
     logger.debug hash.inspect
   end
 
