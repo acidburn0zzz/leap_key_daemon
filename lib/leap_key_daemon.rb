@@ -6,6 +6,7 @@ unless defined? LEAP_KEY_DAEMON_CONFIG
 end
 
 module LeapKeyDaemon
+  require 'leap_key_daemon/key'
 
   class << self
     attr_accessor :logger
@@ -25,12 +26,14 @@ module LeapKeyDaemon
   config.flags = FLAGS
   puts "flags: #{FLAGS}" if FLAGS.any?
 
-  identities = CouchRest::Changes.new('identities')
+  identities = CouchRest::Changes.new('identities', :include_docs => true)
 
   identities.changed do |hash|
     logger.debug "Changed identity " + hash['id']
-    logger.debug hash.inspect
+    key = Key.new(hash['doc'])
+    key.upload || logger.debug("No key found.")
   end
 
   identities.listen
+
 end
