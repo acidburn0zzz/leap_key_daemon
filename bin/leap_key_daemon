@@ -46,7 +46,7 @@ LeapKeyDaemon::FLAGS.concat ARGV.grep(/--.*/)
 
 # if flags have been set but an action is missing we assume
 # we should run in foreground.
-if ARGV.first.start_with?('--')
+if ARGV.first && ARGV.first.start_with?('--')
   ARGV.unshift '--'
   ARGV.unshift 'run'
 end
